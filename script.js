@@ -6,10 +6,10 @@ document.addEventListener("DOMContentLoaded", function() {
     const containerEvolution = document.querySelector(".containerEvolution");
     const errorMessage = document.querySelector(".containerError");
 
-    let currentPokemonName = ""; // Almacena el nombre del Pokémon actual
-    let nextEvolutionName = ""; // Almacena el nombre de la próxima evolución
+    let currentPokemonName = ""; 
+    let nextEvolutionName = ""; 
     let evolutionChainUrl = "";
-
+    let numberVolution=0;
 
     searchButton.addEventListener("click", function() {
         const pokemonName = searchInput.value.toLowerCase();
@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", function() {
             })
             .then(speciesData => {
                 description = speciesData.flavor_text_entries.find(entry => entry.language.name === "es").flavor_text;
-                evolutionChainUrl =speciesData.evolution_chain.url;
+                evolutionChainUrl = speciesData.evolution_chain.url;
                 displayPokemonInfo(pokemonData,description);
             })
             .catch(error => {
@@ -60,29 +60,15 @@ document.addEventListener("DOMContentLoaded", function() {
         document.querySelector(".pokemonType").textContent = pokemonData.types.map(type => type.type.name).join(", ");
         document.querySelector(".pokemonDescription").textContent = description;
         document.querySelector(".pokemonAbilities").textContent = pokemonData.abilities.map(ability => ability.ability.name).join(", ");
-               
-
-        if (nextEvolutionName !== `https://pokeapi.co/api/v2/pokemon/${pokemonData.name}/`) {
-            evolutionButton.style.display = "block"; // Mostrar el botón de evolución
-            containerEvolution.style.display = "block"; // Mostrar el botón de evolución
-            cardContainer.style.display = "block"; // Mostrar la información del Pokémon
-            currentPokemonName = pokemonData.name; // Almacenar el nombre del Pokémon actual
-        } else {
-            evolutionButton.style.display = "none"; // Ocultar el botón de evolución si no hay evolución disponible
-            cardContainer.style.display = "block"; // Mostrar la información del Pokémon
-        }
+        
+        evolutionButton.style.display = "block";
+        containerEvolution.style.display = "block"; 
+        cardContainer.style.display = "block"; 
+        currentPokemonName = pokemonData.name; 
 
     }
-
-    function displayError(message) {
-        errorMessage.style.display = "block";
-        errorMessage.textContent = message;
-        cardContainer.style.display = "none";
-        evolutionButton.style.display = "none";
-    }
-
+    
     evolutionButton.addEventListener("click", function() {
-        const evoluciones =[];
         fetch(evolutionChainUrl)
             .then(response => {
                 if (!response.ok) {
@@ -91,15 +77,29 @@ document.addEventListener("DOMContentLoaded", function() {
                 return response.json();
             })
             .then(evolutionChainData => {
-                if(evoluciones[0] !== currentPokemonName){
-                    searchPokemon(evolutionChainData.chain.species.name);
+                if(evolutionChainData.chain.evolves_to[0].species.name !== currentPokemonName){
+                    searchPokemon(evolutionChainData.chain.evolves_to[0].species.name);
                 }
-                evoluciones.push(evolutionChainData.chain.evolves_to[0].evolves_to[0].species.name)
-
+                else{
+                    searchPokemon(evolutionChainData.chain.evolves_to[0].evolves_to[0].species.name);
+                    hideButtonEvolution();
+                }
             })
             .catch(error => {
                 displayError(error.message);
             });
         }
     );
+
+    function hideButtonEvolution() {
+        evolutionButton.style.display = "none";
+        containerEvolution.style.display = "none"; 
+    }
+
+    function displayError(message) {
+        errorMessage.style.display = "block";
+        errorMessage.textContent = message;
+        cardContainer.style.display = "none";
+        evolutionButton.style.display = "none";
+    }
 });
